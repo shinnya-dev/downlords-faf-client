@@ -124,7 +124,7 @@ public class GameRunner implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() {
-    runningGame.bind(runningGameId.map(gameService::getByUid).map(possibleGame -> possibleGame.orElse(null)));
+    runningGame.bind(runningGameId.flatMap(gameService::observeByUid));
 
     running.bind(process.flatMap(process -> {
       BooleanProperty isAlive = new SimpleBooleanProperty(process.isAlive());

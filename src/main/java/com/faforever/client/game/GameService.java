@@ -9,7 +9,9 @@ import com.faforever.client.player.PlayerService;
 import com.faforever.client.remote.FafServerAccessor;
 import com.faforever.commons.lobby.GameStatus;
 import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
@@ -107,5 +109,9 @@ public class GameService implements InitializingBean {
 
   public Optional<GameInfo> getByUid(Integer uid) {
     return Optional.ofNullable(gameIdToGame.get(uid));
+  }
+
+  public ObservableValue<GameInfo> observeByUid(Integer uid) {
+    return Bindings.valueAt(gameIdToGame, uid);
   }
 }

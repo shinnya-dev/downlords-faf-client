@@ -31,6 +31,7 @@ public class DiscordRichPresenceService implements DisposableBean, InitializingB
   private static final String PLAYING = "Playing";
   /**
    * It is suggested as per the library's GitHub page to look for callbacks every 5 seconds.
+   *
    * @see <a href="https://github.com/Vatuu/discord-rpc">Projects GitHubPage</a>
    */
   private static final int INITIAL_DELAY_FOR_CALLBACK_MILLIS = 5000;
@@ -66,8 +67,9 @@ public class DiscordRichPresenceService implements DisposableBean, InitializingB
     // This need to be change and not invalidation listeners but not quite sure why since they don't get triggered more than
     // once as invalidation listeners
     gameRunner.runningGameProperty().flatMap(GameInfo::statusProperty).subscribe(ignored -> updatePlayedGame());
-    gameRunner.runningGameProperty().flatMap(GameInfo::allPlayersInGameProperty)
-               .subscribe(ignored -> updatePlayedGame());
+    gameRunner.runningGameProperty()
+              .flatMap(GameInfo::allPlayersInGameProperty)
+              .subscribe(ignored -> updatePlayedGame());
   }
 
   private void updatePlayedGame() {
@@ -95,7 +97,11 @@ public class DiscordRichPresenceService implements DisposableBean, InitializingB
         joinSecret = objectMapper.writeValueAsString(new DiscordJoinSecret(game.getId()));
       }
 
-      if (game.getStatus() == GameStatus.PLAYING && game.getStartTime() != null && game.getStartTime().isAfter(OffsetDateTime.now().plusSeconds(clientProperties.getReplay().getWatchDelaySeconds()))) {
+      if (game.getStatus() == GameStatus.PLAYING && game.getStartTime() != null && game.getStartTime()
+                                                                                       .isAfter(OffsetDateTime.now()
+                                                                                                              .plusSeconds(
+                                                                                                                  clientProperties.getReplay()
+                                                                                                                                  .getWatchDelaySeconds()))) {
         spectateSecret = objectMapper.writeValueAsString(new DiscordSpectateSecret(game.getId()));
       }
 
