@@ -16,6 +16,7 @@ import com.faforever.client.fa.relay.ice.CoturnService;
 import com.faforever.client.fa.relay.ice.IceAdapter;
 import com.faforever.client.featuredmod.FeaturedModService;
 import com.faforever.client.fx.FxApplicationThreadExecutor;
+import com.faforever.client.fx.ObservableConstant;
 import com.faforever.client.fx.PlatformService;
 import com.faforever.client.game.EnterPasswordController.PasswordEnteredListener;
 import com.faforever.client.i18n.I18n;
@@ -57,7 +58,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.publisher.TestPublisher;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -194,8 +194,7 @@ public class GameRunnerTest extends ServiceTest {
     lenient().when(process.onExit()).thenReturn(new CompletableFuture<>());
     lenient().when(process.exitValue()).thenReturn(0);
     lenient().when(process.isAlive()).thenReturn(true);
-    lenient().when(gameService.getByUid(anyInt()))
-             .thenAnswer(invocation -> Optional.of(
+    lenient().when(gameService.observeByUid(anyInt())).thenAnswer(invocation -> ObservableConstant.valueOf(
                  GameInfoBuilder.create().id(invocation.getArgument(0, Integer.class)).get()));
   }
 
@@ -559,8 +558,8 @@ public class GameRunnerTest extends ServiceTest {
     lenient().when(fafServerAccessor.requestHostGame(any())).thenReturn(completedFuture(gameLaunchResponse));
     lenient().when(modService.downloadAndEnableMods(anySet())).thenReturn(Mono.empty());
     lenient().when(mapService.downloadIfNecessary(any())).thenReturn(Mono.empty());
-    lenient().when(gameService.getByUid(anyInt()))
-             .thenReturn(Optional.of(GameInfoBuilder.create().defaultValues().get()));
+    lenient().when(gameService.observeByUid(anyInt()))
+             .thenReturn(ObservableConstant.valueOf(GameInfoBuilder.create().defaultValues().get()));
     mockStartGameProcess(gameLaunchResponse);
   }
 
