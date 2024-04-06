@@ -640,7 +640,8 @@
                                                 <Label contentDisplay="RIGHT" maxWidth="1.7976931348623157E308"
                                                        styleClass="setting-title" text="%settings.fa.gameLocation"/>
                                                 <TextField fx:id="gameLocationTextField"
-                                                           promptText="%settings.useDefaultDirectory" GridPane.rowIndex="1"/>
+                                                           promptText="%settings.useDefaultDirectory"
+                                                           GridPane.rowIndex="1" editable="false"/>
                                                 <Button mnemonicParsing="false" onAction="#onSelectGameLocation"
                                                         text="%settings.fa.chooseDirectory" GridPane.columnIndex="1"
                                                         GridPane.rowIndex="1"/>
@@ -669,7 +670,8 @@
                                                     </graphic>
                                                 </Label>
                                                 <TextField fx:id="vaultLocationTextField"
-                                                           promptText="%settings.useDefaultDirectory" GridPane.rowIndex="1"/>
+                                                           promptText="%settings.useDefaultDirectory"
+                                                           GridPane.rowIndex="1" editable="false"/>
                                                 <Button mnemonicParsing="false" onAction="#onSelectVaultLocation"
                                                         text="%settings.fa.chooseDirectory" GridPane.columnIndex="1"
                                                         GridPane.rowIndex="1"/>
@@ -1056,7 +1058,8 @@
                                                 <Label contentDisplay="RIGHT" maxWidth="1.7976931348623157E308"
                                                        styleClass="setting-title" text="%settings.data.dataLocation"/>
                                                 <TextField fx:id="dataLocationTextField"
-                                                           promptText="%settings.useDefaultDirectory" GridPane.rowIndex="1"/>
+                                                           promptText="%settings.useDefaultDirectory"
+                                                           GridPane.rowIndex="1" editable="false"/>
                                                 <Button mnemonicParsing="false" onAction="#onSelectDataLocation"
                                                         text="%settings.fa.chooseDirectory" GridPane.columnIndex="1"
                                                         GridPane.rowIndex="1"/>

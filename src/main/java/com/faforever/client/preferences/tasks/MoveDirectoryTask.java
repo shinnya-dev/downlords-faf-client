@@ -12,8 +12,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.FileSystemUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -43,6 +45,16 @@ public class MoveDirectoryTask extends CompletableTask<Void> {
   protected Void call() throws Exception {
     Objects.requireNonNull(oldDirectory, "Old directory has not been set");
     Objects.requireNonNull(newDirectory, "New directory has not been set");
+
+    if (Files.exists(newDirectory)) {
+      try (Stream<Path> files = Files.list(newDirectory)) {
+        if (files.findAny().isPresent()) {
+          notificationService.addImmediateWarnNotification("directory.move.notempty", newDirectory);
+          return null;
+        }
+      }
+    }
+
     updateTitle(i18n.get("directory.move", oldDirectory, newDirectory));
 
     try {
@@ -56,7 +68,7 @@ public class MoveDirectoryTask extends CompletableTask<Void> {
 
     afterCopyAction.run();
 
-    if (!preserveOldDirectory) {
+    if (!preserveOldDirectory && !newDirectory.startsWith(oldDirectory)) {
       updateTitle(i18n.get("directory.delete", oldDirectory));
       try {
         FileSystemUtils.deleteRecursively(oldDirectory);
