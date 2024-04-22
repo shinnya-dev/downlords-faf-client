@@ -4,7 +4,6 @@ import com.faforever.client.api.FafApiAccessor;
 import com.faforever.client.builders.MatchmakerQueueInfoBuilder;
 import com.faforever.client.builders.PlayerInfoBuilder;
 import com.faforever.client.config.ClientProperties;
-import com.faforever.client.domain.api.Map;
 import com.faforever.client.domain.api.MapPoolAssignment;
 import com.faforever.client.domain.api.MapVersion;
 import com.faforever.client.domain.server.MatchmakerQueueInfo;
@@ -73,7 +72,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.Is.is;
 import static org.instancio.Select.field;
-import static org.instancio.Select.scope;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -150,7 +148,7 @@ public class MapServiceTest extends PlatformTest {
     }).when(taskService).submitTask(any());
 
     instance = new MapService(notificationService, taskService, fafApiAccessor, assetService, i18n,
-                              themeService, mapGeneratorService, playerService, mapMapper, fileSizeReader,
+                              themeService, mapGeneratorService, playerService, mapMapper, matchmakerMapper, fileSizeReader,
                               clientProperties, forgedAlliancePrefs, preferences, mapUploadTaskFactory,
                               downloadMapTaskFactory, uninstallMapTaskFactory, fxApplicationThreadExecutor);
     instance.officialMaps = Set.of();
@@ -442,55 +440,17 @@ public class MapServiceTest extends PlatformTest {
 
     Flux<ElideEntity> resultFlux = Flux.fromIterable(
         matchmakerMapper.mapAssignmentBeans(List.of(mapPoolAssignment1, mapPoolAssignment2)));
-    when(fafApiAccessor.getMany(any(), anyString())).thenReturn(resultFlux);
-    when(playerService.getCurrentPlayer()).thenReturn(PlayerInfoBuilder.create().defaultValues().get());
+    when(fafApiAccessor.getMany(any())).thenReturn(resultFlux);
 
     MatchmakerQueueInfo matchmakerQueue = MatchmakerQueueInfoBuilder.create().defaultValues().get();
-    StepVerifier.create(instance.getMatchmakerMapsWithPageCount(matchmakerQueue, 10, 1)).assertNext(results -> {
-      assertThat(results.getT1(), hasSize(2));
-      assertThat(results.getT2(), is(1));
+    StepVerifier.create(instance.getMatchmakerBrackets(matchmakerQueue)).assertNext(results -> {
+      assertThat(results.entrySet(), hasSize(2));
     }).verifyComplete();
 
     verify(fafApiAccessor).getMany(
-        argThat(ElideMatchers.hasDtoClass(com.faforever.commons.api.dto.MapPoolAssignment.class)), anyString());
+        argThat(ElideMatchers.hasDtoClass(com.faforever.commons.api.dto.MapPoolAssignment.class)));
   }
 
-  @Test
-  public void testGetMatchMakerMapsWithPagination() throws Exception {
-    MapPoolAssignment mapPoolAssignment1 = Instancio.of(MapPoolAssignment.class)
-                                                    .set(field(MapVersion::size).within(scope(MapVersion.class)),
-                                                         new MapSize(512, 512))
-                                                    .set(field(Map::displayName).within(scope(Map.class)),
-                                                             "a")
-                                                    .create();
-    MapPoolAssignment mapPoolAssignment2 = Instancio.of(MapPoolAssignment.class)
-                                                    .set(field(MapVersion::size).within(scope(MapVersion.class)),
-                                                         new MapSize(512, 512))
-                                                    .set(field(Map::displayName).within(scope(Map.class)),
-                                                             "b")
-                                                    .create();
-    MapPoolAssignment mapPoolAssignment3 = Instancio.of(MapPoolAssignment.class)
-                                                    .set(field(MapVersion::size).within(scope(MapVersion.class)),
-                                                         new MapSize(1024, 1024))
-                                                    .set(field(Map::displayName).within(scope(Map.class)),
-                                                             "c")
-                                                    .create();
-
-    Flux<ElideEntity> resultFlux = Flux.fromIterable(
-        matchmakerMapper.mapAssignmentBeans(List.of(mapPoolAssignment1, mapPoolAssignment2, mapPoolAssignment3)));
-    when(fafApiAccessor.getMany(any(), anyString())).thenReturn(resultFlux);
-    when(playerService.getCurrentPlayer()).thenReturn(PlayerInfoBuilder.create().defaultValues().get());
-
-    MatchmakerQueueInfo matchmakerQueue = MatchmakerQueueInfoBuilder.create().defaultValues().get();
-    StepVerifier.create(instance.getMatchmakerMapsWithPageCount(matchmakerQueue, 1, 2)).assertNext(results -> {
-      assertThat(results.getT1(), hasSize(1));
-      assertThat(results.getT1().getFirst().id(), is(mapPoolAssignment2.mapVersion().id()));
-      assertThat(results.getT2(), is(3));
-    }).verifyComplete();
-
-    verify(fafApiAccessor).getMany(
-        argThat(ElideMatchers.hasDtoClass(com.faforever.commons.api.dto.MapPoolAssignment.class)), anyString());
-  }
 
   @Test
   public void testHasPlayedMap() throws Exception {
