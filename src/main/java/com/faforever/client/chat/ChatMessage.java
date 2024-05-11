@@ -30,7 +30,7 @@ public class ChatMessage {
   private final Type type;
   private final ChatMessage targetMessage;
 
-  private final BooleanProperty open = new SimpleBooleanProperty();
+  private final BooleanProperty seen = new SimpleBooleanProperty();
   private final ObservableMap<Emoticon, ObservableMap<String, String>> reactions = FXCollections.synchronizedObservableMap(
       FXCollections.observableHashMap());
   private final ObservableMap<Emoticon, ObservableMap<String, String>> unmodifiableReactions = FXCollections.unmodifiableObservableMap(
@@ -59,16 +59,16 @@ public class ChatMessage {
     }
   }
 
-  public boolean isOpen() {
-    return open.get();
+  public boolean isSeen() {
+    return seen.get();
   }
 
-  public BooleanProperty openProperty() {
-    return open;
+  public BooleanProperty seenProperty() {
+    return seen;
   }
 
-  public void setOpen(boolean open) {
-    this.open.set(open);
+  public void setSeen(boolean seen) {
+    this.seen.set(seen);
   }
 
   public enum Type {

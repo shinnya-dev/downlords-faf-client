@@ -2,13 +2,14 @@ package com.faforever.client.chat;
 
 import com.faforever.client.fx.FxApplicationThreadExecutor;
 import com.faforever.client.theme.UiService;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.layout.VBox;
 import org.fxmisc.flowless.Cell;
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 @Component
@@ -28,19 +28,15 @@ public class ChatMessageCell implements Cell<ChatMessage, Node> {
 
   private final ObjectProperty<Consumer<ChatMessage>> onReplyButtonClicked = new SimpleObjectProperty<>();
   private final ObjectProperty<Consumer<ChatMessage>> onReplyClicked = new SimpleObjectProperty<>();
-  private final ObjectProperty<ObservableList<ChatMessage>> items = new SimpleObjectProperty<>();
-  private final IntegerProperty index = new SimpleIntegerProperty();
+  private final ReadOnlyIntegerWrapper index = new ReadOnlyIntegerWrapper();
+  private final BooleanProperty showDetails = new SimpleBooleanProperty();
+  private final ReadOnlyObjectWrapper<ChatMessage> item = new ReadOnlyObjectWrapper<>();
 
   public ChatMessageCell(UiService uiService, FxApplicationThreadExecutor fxApplicationThreadExecutor) {
     this.fxApplicationThreadExecutor = fxApplicationThreadExecutor;
     chatMessageController = uiService.loadFxml("theme/chat/chat_message.fxml");
-    ObservableValue<ChatMessage> previousMessageProperty = items.flatMap(
-        items -> Bindings.valueAt(items, index.subtract(1)));
-    chatMessageController.showDetailsProperty()
-                         .bind(Bindings.createBooleanBinding(() -> showDetails(previousMessageProperty.getValue(),
-                                                                               chatMessageController.getChatMessage()),
-                                                             previousMessageProperty,
-                                                             chatMessageController.chatMessageProperty()));
+    chatMessageController.chatMessageProperty().bind(item);
+    chatMessageController.showDetailsProperty().bind(showDetails);
     chatMessageController.onReplyButtonClickedProperty().bind(onReplyButtonClicked);
     chatMessageController.onReplyClickedProperty().bind(onReplyClicked);
   }
@@ -57,7 +53,7 @@ public class ChatMessageCell implements Cell<ChatMessage, Node> {
 
   @Override
   public void updateItem(ChatMessage item) {
-    fxApplicationThreadExecutor.execute(() -> chatMessageController.setChatMessage(item));
+    fxApplicationThreadExecutor.execute(() -> this.item.set(item));
   }
 
   @Override
@@ -67,19 +63,7 @@ public class ChatMessageCell implements Cell<ChatMessage, Node> {
 
   @Override
   public void reset() {
-    fxApplicationThreadExecutor.execute(() -> chatMessageController.setChatMessage(null));
-  }
-
-  private boolean showDetails(ChatMessage previousMessage, ChatMessage currentMessage) {
-    if (currentMessage == null) {
-      return false;
-    }
-
-    if (previousMessage == null) {
-      return true;
-    }
-
-    return !Objects.equals(previousMessage.getSender(), currentMessage.getSender());
+    fxApplicationThreadExecutor.execute(() -> this.item.set(null));
   }
 
   public Consumer<ChatMessage> getOnReplyButtonClicked() {
@@ -106,15 +90,31 @@ public class ChatMessageCell implements Cell<ChatMessage, Node> {
     this.onReplyClicked.set(onReplyClicked);
   }
 
-  public ObservableList<ChatMessage> getItems() {
-    return items.get();
+  public boolean isShowDetails() {
+    return showDetails.get();
   }
 
-  public ObjectProperty<ObservableList<ChatMessage>> itemsProperty() {
-    return items;
+  public BooleanProperty showDetailsProperty() {
+    return showDetails;
   }
 
-  public void setItems(ObservableList<ChatMessage> items) {
-    this.items.set(items);
+  public void setShowDetails(boolean showDetails) {
+    this.showDetails.set(showDetails);
+  }
+
+  public int getIndex() {
+    return index.get();
+  }
+
+  public ReadOnlyIntegerProperty indexProperty() {
+    return index.getReadOnlyProperty();
+  }
+
+  public ReadOnlyObjectProperty<ChatMessage> itemProperty() {
+    return item.getReadOnlyProperty();
+  }
+
+  public ChatMessage getItem() {
+    return item.get();
   }
 }

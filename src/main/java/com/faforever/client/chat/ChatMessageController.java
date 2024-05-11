@@ -162,8 +162,6 @@ public class ChatMessageController extends NodeController<VBox> {
     chatMessage.when(attached).subscribe((oldValue, newValue) -> {
       if (oldValue != null) {
         oldValue.getReactions().removeListener(reactionChangeListener);
-        oldValue.openProperty().unbind();
-        oldValue.setOpen(false);
       }
 
       reactionNodeMap.clear();
@@ -172,7 +170,7 @@ public class ChatMessageController extends NodeController<VBox> {
       if (newValue != null) {
         newValue.getReactions().forEach(this::addReaction);
         newValue.getReactions().addListener(reactionChangeListener);
-        newValue.openProperty().bind(showing);
+        newValue.setSeen(true);
       }
     });
 
@@ -193,15 +191,6 @@ public class ChatMessageController extends NodeController<VBox> {
                                        .map(ChatChannelUser::getUsername)
                                        .map(username -> "@" + username)
                                        .when(showing));
-  }
-
-  @Override
-  protected void onDetached() {
-    ChatMessage chatMessage = getChatMessage();
-    if (chatMessage != null) {
-      chatMessage.openProperty().unbind();
-      chatMessage.setOpen(false);
-    }
   }
 
   private void onReactionChange(

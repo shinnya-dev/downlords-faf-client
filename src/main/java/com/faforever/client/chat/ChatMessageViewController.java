@@ -11,6 +11,7 @@ import com.faforever.client.ui.StageHolder;
 import com.faforever.client.util.ConcurrentUtil;
 import com.faforever.client.util.PopupUtil;
 import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -132,7 +134,7 @@ public class ChatMessageViewController extends NodeController<VBox> {
 
       if (newValue != null) {
         newValue.getMessages().addListener(chatMessageListener);
-        newValue.getMessages().forEach(message -> fxApplicationThreadExecutor.execute(() -> rawMessages.add(message)));
+        fxApplicationThreadExecutor.execute(() -> rawMessages.addAll(newValue.getMessages()));
         ObservableList<ChatChannelUser> typingUsers = newValue.getTypingUsers();
         setTypingLabel(typingUsers);
         typingUsers.addListener(typingUsersChangeListener);
@@ -161,7 +163,13 @@ public class ChatMessageViewController extends NodeController<VBox> {
 
     messageListView = VirtualFlow.createVertical(filteredMessages, item -> {
       ChatMessageCell cell = chatMessageCellFactory.getObject();
-      cell.setItems(filteredMessages);
+      cell.showDetailsProperty()
+          .bind(Bindings.valueAt(filteredMessages, cell.indexProperty().subtract(1))
+                        .flatMap(previousMessage -> cell.itemProperty()
+                                                        .map(currentMessage -> showDetails(previousMessage,
+                                                                                           currentMessage)))
+                        .orElse(true)
+                        .when(showing));
       cell.updateItem(item);
       cell.setOnReplyButtonClicked(message -> {
         targetMessage.set(message);
@@ -185,16 +193,28 @@ public class ChatMessageViewController extends NodeController<VBox> {
     });
   }
 
+  private boolean showDetails(ChatMessage previousMessage, ChatMessage currentMessage) {
+    if (currentMessage == null) {
+      return false;
+    }
+
+    if (previousMessage == null) {
+      return true;
+    }
+
+    return !Objects.equals(previousMessage.getSender(), currentMessage.getSender());
+  }
+
   private void scrollToEnd() {
     fxApplicationThreadExecutor.execute(() -> messageListView.showAsLast(filteredMessages.size() - 1));
   }
 
   private void onMessageChange(SetChangeListener.Change<? extends ChatMessage> change) {
-      if (change.wasAdded()) {
-        fxApplicationThreadExecutor.execute(() -> rawMessages.add(change.getElementAdded()));
-      } else if (change.wasRemoved()) {
-        fxApplicationThreadExecutor.execute(() -> rawMessages.remove(change.getElementRemoved()));
-      }
+    if (change.wasAdded()) {
+      fxApplicationThreadExecutor.execute(() -> rawMessages.add(change.getElementAdded()));
+    } else if (change.wasRemoved()) {
+      fxApplicationThreadExecutor.execute(() -> rawMessages.remove(change.getElementRemoved()));
+    }
   }
 
   private AutoCompletionHelper createAutoCompletionHelper() {
@@ -325,6 +345,7 @@ public class ChatMessageViewController extends NodeController<VBox> {
       messageTextField.setDisable(false);
       messageTextField.requestFocus();
       removeReply();
+      scrollToEnd();
     }, fxApplicationThreadExecutor);
   }
 
