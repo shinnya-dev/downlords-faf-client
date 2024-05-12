@@ -4,7 +4,7 @@ import com.faforever.client.domain.server.PlayerInfo;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 public record ReplayReview(
-    Integer id, String text, PlayerInfo player, Integer score, Replay subject
+    Integer id, String text, PlayerInfo player, int score, Replay subject
 ) implements ReviewBean<ReplayReview> {
 
   @Override

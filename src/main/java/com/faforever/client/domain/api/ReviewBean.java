@@ -10,7 +10,7 @@ public sealed interface ReviewBean<R extends ReviewBean<R>> permits MapVersionRe
 
   PlayerInfo player();
 
-  Integer score();
+  int score();
 
   ComparableVersion version();
 

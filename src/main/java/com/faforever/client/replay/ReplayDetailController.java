@@ -342,9 +342,8 @@ public class ReplayDetailController extends NodeController<Node> {
     reviewsController.setCanWriteReview(true);
     reviewsController.setOnSendReviewListener(this::onSendReview);
     reviewsController.setOnDeleteReviewListener(this::onDeleteReview);
-    reviewsController.setReviewSupplier(() -> {
-      return new ReplayReview(null, null, playerService.getCurrentPlayer(), null, replay.get());
-    });
+    reviewsController.setReviewSupplier(
+        () -> new ReplayReview(null, null, playerService.getCurrentPlayer(), 0, replay.get()));
     reviewsController.bindReviews(replayReviews);
   }
 

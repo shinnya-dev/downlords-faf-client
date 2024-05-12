@@ -4,7 +4,7 @@ import com.faforever.client.domain.server.PlayerInfo;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 public record ModVersionReview(
-    Integer id, String text, PlayerInfo player, Integer score, ModVersion subject
+    Integer id, String text, PlayerInfo player, int score, ModVersion subject
 ) implements ReviewBean<ModVersionReview> {
 
   @Override

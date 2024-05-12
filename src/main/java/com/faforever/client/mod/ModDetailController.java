@@ -186,7 +186,7 @@ public class ModDetailController extends NodeController<Node> {
     reviewsController.setOnSendReviewListener(this::onSendReview);
     reviewsController.setOnDeleteReviewListener(this::onDeleteReview);
     reviewsController.setReviewSupplier(
-        () -> new ModVersionReview(null, null, playerService.getCurrentPlayer(), null, modVersion.get()));
+        () -> new ModVersionReview(null, null, playerService.getCurrentPlayer(), 0, modVersion.get()));
     reviewsController.bindReviews(modReviews);
   }
 

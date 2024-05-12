@@ -185,7 +185,7 @@ public class MapDetailController extends NodeController<Node> {
     reviewsController.setOnSendReviewListener(this::onSendReview);
     reviewsController.setOnDeleteReviewListener(this::onDeleteReview);
     reviewsController.setReviewSupplier(
-        () -> new MapVersionReview(null, null, playerService.getCurrentPlayer(), null, mapVersion.get()));
+        () -> new MapVersionReview(null, null, playerService.getCurrentPlayer(), 0, mapVersion.get()));
     reviewsController.bindReviews(mapReviews);
   }
 

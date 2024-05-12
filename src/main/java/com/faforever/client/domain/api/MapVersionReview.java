@@ -4,7 +4,7 @@ import com.faforever.client.domain.server.PlayerInfo;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 public record MapVersionReview(
-    Integer id, String text, PlayerInfo player, Integer score, MapVersion subject
+    Integer id, String text, PlayerInfo player, int score, MapVersion subject
 ) implements ReviewBean<MapVersionReview> {
 
   @Override
