@@ -20,6 +20,7 @@
                  text="%game.averageRating"/>
     <TableColumn fx:id="ratingRangeColumn" editable="false" minWidth="20.0" prefWidth="100.0" text="%game.ratingRange"/>
     <TableColumn fx:id="hostColumn" editable="false" minWidth="20.0" text="%game.host"/>
+    <TableColumn fx:id="lifetimeColumn" editable="false" minWidth="20.0" prefWidth="30.0" text="%game.lifetime"/>
     <TableColumn fx:id="modsColumn" editable="false" minWidth="20.0" prefWidth="-1.0" text="%game.mods"/>
   </columns>
   <columnResizePolicy>

@@ -40,9 +40,10 @@ public interface GameMapper {
   }
 
   default OffsetDateTime mapLaunchedAt(Double launchedAt) {
-    if (launchedAt == null) {
-      return null;
-    }
-    return TimeUtil.fromPythonTime(launchedAt.longValue());
+    return launchedAt != null ? TimeUtil.fromPythonTime(launchedAt.longValue()) : null;
+  }
+
+  default OffsetDateTime mapHostedAt(String hostedAt) {
+    return hostedAt != null ? OffsetDateTime.parse(hostedAt) : null;
   }
 }
