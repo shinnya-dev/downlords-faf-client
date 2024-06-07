@@ -19,8 +19,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +78,7 @@ public class TeamMatchmakingMapListController extends NodeController<Pane> {
                                                                                            playerRating);
 
   public Pane root;
-  public FlowPane tilesContainer;
+  public TilePane tilesContainer;
   public ScrollPane scrollContainer;
   public VBox loadingPane;
 
@@ -89,16 +89,14 @@ public class TeamMatchmakingMapListController extends NodeController<Pane> {
 
   private void bindProperties() {
     JavaFxUtil.bindManagedToVisible(loadingPane);
+    tilesContainer.getChildren().subscribe(()->this.loadingPane.setVisible(false));
 
     this.queue.when(showing).subscribe(value -> {
       if (value == null) {
         return;
       }
       loadingPane.setVisible(true);
-      mapService.getMatchmakerBrackets(value).subscribe(rawBrackets -> {
-        loadingPane.setVisible(false);
-        this.brackets.set(rawBrackets);
-      });
+      mapService.getMatchmakerBrackets(value).subscribe(this.brackets::set);
     });
 
     playerRating.bind(playerService.currentPlayerProperty()
@@ -108,10 +106,14 @@ public class TeamMatchmakingMapListController extends NodeController<Pane> {
                                    .orElse(0)
                                    .when(showing));
 
-    this.maxWidth.when(showing).subscribe(this::resizeToContent);
-    this.maxHeight.when(showing).subscribe(this::resizeToContent);
     this.sortedMaps.when(showing).subscribe(this::updateContent);
     this.playerBracketIndex.when(showing).subscribe(this::updateContent);
+  }
+
+  @Override
+  protected void onShow() {
+    addShownSubscription(this.maxWidth.subscribe(this::resizeToContent));
+    addShownSubscription(this.maxHeight.subscribe(this::resizeToContent));
   }
 
   @Override
@@ -224,27 +226,11 @@ public class TeamMatchmakingMapListController extends NodeController<Pane> {
     int maxTilesInLine = (int) Math.min(10, Math.floor((getMaxWidth() * 0.95 - PADDING * 2 + hgap) / tileHSize));
     int maxLinesWithoutScroll = (int) Math.floor((getMaxHeight() * 0.95 - PADDING * 2 + vgap) / tileVSize);
 
-    double maxScrollPaneHeight = maxLinesWithoutScroll * tileVSize - vgap;
-    this.scrollContainer.setMaxHeight(maxScrollPaneHeight);
-
     int tilesInOneLine = Math.min(maxTilesInLine,
                                   Math.max(Math.max(4, Math.ceilDiv(tilecount, Math.max(1, maxLinesWithoutScroll))),
                                            (int) Math.ceil(Math.sqrt(tilecount))));
-    int numberOfLines = Math.ceilDiv(tilecount, tilesInOneLine);
 
-    double preferredWidth = tileHSize * tilesInOneLine - hgap;
-    double gridHeight = tileVSize * numberOfLines - vgap;
-
-    if (gridHeight > maxScrollPaneHeight) {
-      int scrollWidth = 18;
-      scrollContainer.setPrefWidth(preferredWidth + scrollWidth);
-      scrollContainer.setPrefHeight(maxScrollPaneHeight);
-    } else {
-      scrollContainer.setPrefWidth(preferredWidth);
-      scrollContainer.setPrefHeight(gridHeight);
-    }
-
-    tilesContainer.setPrefWidth(preferredWidth);
+    tilesContainer.setPrefColumns(tilesInOneLine);
   }
 
   private void updateContent() {
