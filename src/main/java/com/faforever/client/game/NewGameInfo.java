@@ -18,4 +18,11 @@ public record NewGameInfo(
   public NewGameInfo(String title, String password, String featuredModName, String map, Set<String> simMods) {
     this(title, password, featuredModName, map, simMods, GameVisibility.PUBLIC, null, null, false);
   }
+
+  public NewGameInfo {
+    if (ratingMin != null && ratingMax != null && ratingMin > ratingMax) {
+      throw new IllegalArgumentException(
+          "Min cannot be greater than min: min %d max %d".formatted(ratingMin, ratingMax));
+    }
+  }
 }

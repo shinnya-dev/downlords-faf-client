@@ -120,25 +120,34 @@ public class GamesTableController extends NodeController<Node> {
 
     mapPreviewColumn.setCellFactory(param -> new MapPreviewTableCell(imageViewHelper));
     mapPreviewColumn.setCellValueFactory(param -> param.getValue()
-        .mapFolderNameProperty()
-        .flatMap(mapFolderName -> Bindings.createObjectBinding(() -> mapService.loadPreview(mapFolderName, PreviewSize.SMALL), mapService.isInstalledBinding(mapFolderName)))
-        .flatMap(imageViewHelper::createPlaceholderImageOnErrorObservable)
-        .when(mapPreviewColumn.visibleProperty().and(showing)));
+                                                       .mapFolderNameProperty()
+                                                       .flatMap(mapFolderName -> Bindings.createObjectBinding(
+                                                           () -> mapService.loadPreview(mapFolderName,
+                                                                                        PreviewSize.SMALL),
+                                                           mapService.isInstalledBinding(mapFolderName)))
+                                                       .flatMap(
+                                                           imageViewHelper::createPlaceholderImageOnErrorObservable)
+                                                       .when(mapPreviewColumn.visibleProperty().and(showing)));
 
     gameTitleColumn.setCellValueFactory(param -> param.getValue().titleProperty().when(showing));
     gameTitleColumn.setCellFactory(param -> new StringCell<>(StringUtils::normalizeSpace));
     playersColumn.setCellValueFactory(param -> param.getValue()
-        .maxPlayersProperty()
-        .flatMap(max -> param.getValue()
-            .numActivePlayersProperty()
-            .map(Number::intValue)
-            .map(active -> new PlayerFill(active, max.intValue())))
-        .when(showing));
+                                                    .maxPlayersProperty()
+                                                    .flatMap(max -> param.getValue()
+                                                                         .numActivePlayersProperty()
+                                                                         .map(Number::intValue)
+                                                                         .map(active -> new PlayerFill(active,
+                                                                                                       max.intValue())))
+                                                    .when(showing));
     playersColumn.setCellFactory(param -> playersCell());
     ratingRangeColumn.setCellValueFactory(param -> param.getValue()
-        .ratingMaxProperty()
-        .flatMap(max -> param.getValue().ratingMinProperty().map(min -> new RatingRange(min, max)))
-        .when(ratingRangeColumn.visibleProperty().and(showing)));
+                                                        .ratingMaxProperty()
+                                                        .flatMap(max -> param.getValue()
+                                                                             .ratingMinProperty()
+                                                                             .map(
+                                                                                 min -> min > max ? null : new RatingRange(
+                                                                                     min, max)))
+                                                        .when(ratingRangeColumn.visibleProperty().and(showing)));
     ratingRangeColumn.setCellFactory(param -> ratingTableCell());
     hostColumn.setCellValueFactory(param -> param.getValue().hostProperty().when(showing));
     hostColumn.setCellFactory(param -> new HostTableCell(playerService, avatarService));
@@ -151,22 +160,20 @@ public class GamesTableController extends NodeController<Node> {
         Duration.between(offsetDateTime, OffsetDateTime.now()))));
 
     if (averageRatingColumn != null) {
-      averageRatingColumn.setCellValueFactory(param -> playerService.getAverageRatingPropertyForGame(param.getValue())
-          .when(showing));
-      averageRatingColumn.setCellFactory(param -> new DecimalCell<>(new DecimalFormat("0"), number -> Math.round(number / 100.0) * 100.0));
+      averageRatingColumn.setCellValueFactory(
+          param -> playerService.getAverageRatingPropertyForGame(param.getValue()).when(showing));
+      averageRatingColumn.setCellFactory(
+          param -> new DecimalCell<>(new DecimalFormat("0"), number -> Math.round(number / 100.0) * 100.0));
     }
 
     if (coopMissionNameProvider != null) {
       coopMissionName.setCellFactory(param -> new StringCell<>(name -> name));
-      coopMissionName.setCellValueFactory(param -> param.getValue()
-          .mapFolderNameProperty()
-          .map(coopMissionNameProvider)
-          .when(showing));
+      coopMissionName.setCellValueFactory(
+          param -> param.getValue().mapFolderNameProperty().map(coopMissionNameProvider).when(showing));
     }
 
-    selectedGameProperty().bind(gamesTable.selectionModelProperty()
-        .flatMap(TableViewSelectionModel::selectedItemProperty)
-        .when(showing));
+    selectedGameProperty().bind(
+        gamesTable.selectionModelProperty().flatMap(TableViewSelectionModel::selectedItemProperty).when(showing));
 
     if (listenToFilterPreferences && coopMissionNameProvider == null) {
       modsColumn.visibleProperty().bind(preferences.hideModdedGamesProperty().not().when(showing));
@@ -247,7 +254,8 @@ public class GamesTableController extends NodeController<Node> {
   }
 
   private TableCell<GameInfo, PlayerFill> playersCell() {
-    return new StringCell<>(playerFill -> i18n.get("game.players.format", playerFill.getPlayers(), playerFill.getMaxPlayers()));
+    return new StringCell<>(
+        playerFill -> i18n.get("game.players.format", playerFill.getPlayers(), playerFill.getMaxPlayers()));
   }
 
   private TableCell<GameInfo, RatingRange> ratingTableCell() {

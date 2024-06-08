@@ -1,6 +1,7 @@
 package com.faforever.client.game;
 
 import com.faforever.client.domain.server.GameInfo;
+import com.faforever.client.domain.server.PlayerInfo;
 import com.faforever.client.fx.FxApplicationThreadExecutor;
 import com.faforever.client.fx.JavaFxUtil;
 import com.faforever.client.mapstruct.GameMapper;
@@ -25,6 +26,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -45,21 +47,20 @@ public class GameService implements InitializingBean {
   private final ObservableMap<Integer, GameInfo> gameIdToGame = FXCollections.synchronizedObservableMap(
       FXCollections.observableHashMap());
   @Getter
-  private final ObservableList<GameInfo> games = JavaFxUtil.attachListToMap(FXCollections.synchronizedObservableList(
-                                                                                FXCollections.observableArrayList(
-                                                                                    game -> new Observable[]{game.statusProperty(), game.teamsProperty(), game.titleProperty(), game.mapFolderNameProperty(), game.simModsProperty(), game.passwordProtectedProperty()})),
-                                                                            gameIdToGame);
+  private final ObservableList<GameInfo> games = JavaFxUtil.attachListToMap(
+      FXCollections.synchronizedObservableList(FXCollections.observableArrayList(game -> new Observable[]{
+          game.statusProperty(), game.teamsProperty(), game.titleProperty(), game.mapFolderNameProperty(),
+          game.simModsProperty(), game.passwordProtectedProperty()
+      })), gameIdToGame);
 
   @Override
   public void afterPropertiesSet() {
     fafServerAccessor.getEvents(com.faforever.commons.lobby.GameInfo.class)
-                     .flatMap(gameInfo -> gameInfo.getGames() == null ? Flux.just(
-                                                         gameInfo) : Flux.fromIterable(gameInfo.getGames()))
-                     .flatMap(gameInfo -> Mono.zip(Mono.just(gameInfo), Mono.justOrEmpty(getByUid(
-                                                                                           gameInfo.getUid()))
-                                                                                       .switchIfEmpty(
-                                                                                           initializeGameBean(
-                                                                                               gameInfo))))
+                     .flatMap(gameInfo -> gameInfo.getGames() == null ? Flux.just(gameInfo) : Flux.fromIterable(
+                         gameInfo.getGames()))
+                     .flatMap(gameInfo -> Mono.zip(Mono.just(gameInfo), Mono.justOrEmpty(getByUid(gameInfo.getUid()))
+                                                                            .switchIfEmpty(
+                                                                                initializeGameBean(gameInfo))))
                      .publishOn(fxApplicationThreadExecutor.asScheduler())
                      .map(TupleUtils.function(gameMapper::update))
                      .doOnError(throwable -> log.error("Error processing game", throwable))
@@ -92,18 +93,21 @@ public class GameService implements InitializingBean {
 
   private ChangeListener<Set<Integer>> generatePlayerChangeListener(GameInfo newGame) {
     return (observable, oldValue, newValue) -> {
-      oldValue.stream()
-              .filter(player -> !newValue.contains(player))
-              .map(playerService::getPlayerByIdIfOnline)
-              .flatMap(Optional::stream)
-              .filter(player -> newGame.equals(player.getGame()))
-              .forEach(player -> player.setGame(null));
-
-      newValue.stream()
-              .filter(player -> !oldValue.contains(player))
-              .map(playerService::getPlayerByIdIfOnline)
-              .flatMap(Optional::stream)
-              .forEach(player -> player.setGame(newGame));
+      List<PlayerInfo> playersWhoLeftGame = oldValue.stream()
+                                                    .filter(player -> !newValue.contains(player))
+                                                    .map(playerService::getPlayerByIdIfOnline)
+                                                    .flatMap(Optional::stream)
+                                                    .filter(player -> newGame.equals(player.getGame()))
+                                                    .toList();
+      List<PlayerInfo> playersWhoJoinedGame = newValue.stream()
+                                                      .filter(player -> !oldValue.contains(player))
+                                                      .map(playerService::getPlayerByIdIfOnline)
+                                                      .flatMap(Optional::stream)
+                                                      .toList();
+      fxApplicationThreadExecutor.execute(() -> {
+        playersWhoLeftGame.forEach(player -> player.setGame(null));
+        playersWhoJoinedGame.forEach(player -> player.setGame(newGame));
+      });
     };
   }
 
