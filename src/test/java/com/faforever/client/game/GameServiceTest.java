@@ -37,6 +37,7 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 public class GameServiceTest extends ServiceTest {
@@ -61,6 +62,10 @@ public class GameServiceTest extends ServiceTest {
     MapperSetup.injectMappers(gameMapper);
 
     when(fxApplicationThreadExecutor.asScheduler()).thenReturn(Schedulers.immediate());
+    lenient().doAnswer(invocation -> {
+      invocation.getArgument(0, Runnable.class).run();
+      return null;
+    }).when(fxApplicationThreadExecutor).execute(any());
     when(fafServerAccessor.getEvents(com.faforever.commons.lobby.GameInfo.class)).thenReturn(testGamePublisher.flux());
     when(fafServerAccessor.connectionStateProperty()).thenReturn(new SimpleObjectProperty<>());
 
@@ -109,8 +114,9 @@ public class GameServiceTest extends ServiceTest {
                                                                                    GameInfoMessageBuilder.create(1)
                                                                                                          .defaultValues()
                                                                                                          .get(),
-                       GameInfoMessageBuilder.create(2).defaultValues().get())
-        ).get();
+                                                                                   GameInfoMessageBuilder.create(2)
+                                                                                                         .defaultValues()
+                                                                                                         .get())).get();
     testGamePublisher.next(multiGameInfo);
 
 
@@ -134,16 +140,8 @@ public class GameServiceTest extends ServiceTest {
     testGamePublisher.next(gameInfo2);
 
 
-    assertThat(instance.getGames(), containsInAnyOrder(
-        allOf(
-            GameMatchers.hasId(1),
-            GameMatchers.hasTitle("Game 1")
-        ),
-        allOf(
-            GameMatchers.hasId(2),
-            GameMatchers.hasTitle("Game 2")
-        )
-    ));
+    assertThat(instance.getGames(), containsInAnyOrder(allOf(GameMatchers.hasId(1), GameMatchers.hasTitle("Game 1")),
+                                                       allOf(GameMatchers.hasId(2), GameMatchers.hasTitle("Game 2"))));
   }
 
   @Test
