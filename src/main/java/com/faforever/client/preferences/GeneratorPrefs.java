@@ -28,6 +28,10 @@ public class GeneratorPrefs {
   private final StringProperty textureStyle = new SimpleStringProperty("");
   private final StringProperty resourceStyle = new SimpleStringProperty("");
   private final StringProperty propStyle = new SimpleStringProperty("");
+  private final IntegerProperty reclaimDensityMin = new SimpleIntegerProperty(0);
+  private final IntegerProperty reclaimDensityMax = new SimpleIntegerProperty(127);
+  private final IntegerProperty resourceDensityMin = new SimpleIntegerProperty(0);
+  private final IntegerProperty resourceDensityMax = new SimpleIntegerProperty(127);
 
   public GenerationType getGenerationType() {
     return generationType.get();
@@ -195,5 +199,61 @@ public class GeneratorPrefs {
 
   public StringProperty propStyleProperty() {
     return propStyle;
+  }
+
+  public boolean isFixedSeed() {
+    return fixedSeed.get();
+  }
+
+  public boolean isCustomStyle() {
+    return customStyle.get();
+  }
+
+  public int getReclaimDensityMin() {
+    return reclaimDensityMin.get();
+  }
+
+  public IntegerProperty reclaimDensityMinProperty() {
+    return reclaimDensityMin;
+  }
+
+  public void setReclaimDensityMin(int min) {
+    this.reclaimDensityMin.set(min);
+  }
+
+  public int getReclaimDensityMax() {
+    return reclaimDensityMax.get();
+  }
+
+  public IntegerProperty reclaimDensityMaxProperty() {
+    return reclaimDensityMax;
+  }
+
+  public void setReclaimDensityMax(int max) {
+    this.reclaimDensityMax.set(max);
+  }
+
+  public int getResourceDensityMin() {
+    return resourceDensityMin.get();
+  }
+
+  public IntegerProperty resourceDensityMinProperty() {
+    return resourceDensityMin;
+  }
+
+  public void setResourceDensityMin(int min) {
+    this.resourceDensityMin.set(min);
+  }
+
+  public int getResourceDensityMax() {
+    return resourceDensityMax.get();
+  }
+
+  public IntegerProperty resourceDensityMaxProperty() {
+    return resourceDensityMax;
+  }
+
+  public void setResourceDensityMax(int max) {
+    this.resourceDensityMax.set(max);
   }
 }
