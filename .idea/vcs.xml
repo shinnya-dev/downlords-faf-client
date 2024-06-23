@@ -9,16 +9,7 @@
   <component name="GitSharedSettings">
     <option name="FORCE_PUSH_PROHIBITED_PATTERNS">
       <list>
-        <option value="master" />
         <option value="main" />
-        <option value="develop" />
-      </list>
-    </option>
-  </component>
-  <component name="GithubSharedProjectSettings">
-    <option name="branchProtectionPatterns">
-      <list>
-        <option value="master" />
         <option value="develop" />
       </list>
     </option>
