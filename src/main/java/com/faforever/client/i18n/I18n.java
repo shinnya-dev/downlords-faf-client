@@ -3,9 +3,9 @@ package com.faforever.client.i18n;
 import com.faforever.client.preferences.DataPrefs;
 import com.faforever.client.preferences.LocalizationPrefs;
 import com.google.common.base.Strings;
+import javafx.beans.property.ReadOnlySetProperty;
 import javafx.beans.property.ReadOnlySetWrapper;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
@@ -32,7 +32,7 @@ public class I18n implements InitializingBean {
   private final LocalizationPrefs localizationPrefs;
   private final DataPrefs dataPrefs;
 
-  private final ObservableSet<Locale> availableLanguages = FXCollections.observableSet();
+  private final ReadOnlySetWrapper<Locale> availableLanguages = new ReadOnlySetWrapper<>(FXCollections.observableSet());
 
   private Locale userSpecificLocale;
 
@@ -146,7 +146,7 @@ public class I18n implements InitializingBean {
     return String.format(userSpecificLocale, "%." + digits + "f", number.doubleValue());
   }
 
-  public ReadOnlySetWrapper<Locale> getAvailableLanguages() {
-    return new ReadOnlySetWrapper<>(availableLanguages);
+  public ReadOnlySetProperty<Locale> getAvailableLanguages() {
+    return availableLanguages.getReadOnlyProperty();
   }
 }

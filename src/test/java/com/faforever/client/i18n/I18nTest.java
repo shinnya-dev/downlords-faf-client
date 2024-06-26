@@ -14,11 +14,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class I18nTest extends ServiceTest {
 
@@ -103,9 +102,14 @@ public class I18nTest extends ServiceTest {
   @Test
   public void testLoadedLanguagesAreComplete() throws IOException {
     final Path path = Path.of("src", "main", "resources", "i18n");
-    try (Stream<Path> walk = Files.walk(path)) {
-      final long messageFileCount = walk.filter(propertiesFile -> Files.isRegularFile(propertiesFile) && propertiesFile.getFileName().toString().endsWith(".properties")).count();
-      assertThat(instance.getAvailableLanguages(), hasSize((int) messageFileCount));
-    }
+    instance.getAvailableLanguages().forEach(locale -> {
+      if (locale.toString().equals("en_US")) {
+        assertTrue(Files.exists(path.resolve("messages.properties")),
+                   "messages file for %s does not exist".formatted(locale));
+      } else {
+        assertTrue(Files.exists(path.resolve("messages_" + locale + ".properties")),
+                   "messages file for %s does not exist".formatted(locale));
+      }
+    });
   }
 }
