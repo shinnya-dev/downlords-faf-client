@@ -32,6 +32,7 @@ public class NotificationPrefs {
   private final IntegerProperty toastDisplayTime = new SimpleIntegerProperty(5000);
   private final IntegerProperty silenceBetweenSounds = new SimpleIntegerProperty(30000);
   private final BooleanProperty afterGameReviewEnabled = new SimpleBooleanProperty(true);
+  private final BooleanProperty matchFoundSoundEnabled = new SimpleBooleanProperty(true);
 
   public boolean isSoundsEnabled() {
     return soundsEnabled.get();
@@ -283,6 +284,17 @@ public class NotificationPrefs {
 
   public BooleanProperty afterGameReviewEnabledProperty() {
     return afterGameReviewEnabled;
+  }
+
+  public void setMatchFoundSoundEnabled(boolean matchFoundSoundEnabled) {
+    this.matchFoundSoundEnabled.set(matchFoundSoundEnabled);
+  }
+
+  public boolean isMatchFoundSoundEnabled() {
+    return matchFoundSoundEnabled.get();
+  }
+  public BooleanProperty matchFoundSoundEnabledProperty() {
+    return matchFoundSoundEnabled;
   }
 
   public int getSilenceBetweenSounds() {
