@@ -2,35 +2,37 @@ faf-client:
   server:
     url: ws://localhost:8003
 
+  user:
+    base-url: http://localhost:8080
+
   irc:
     host: localhost
     port: 6697
 
   vault:
-    base-url: https://content.faforever.com
-    replay-download-url-format: https://replay.faforever.com/%s
+    base-url: http://localhost:8000
+    replay-download-url-format: http://replay.localhost/%s
 
   news:
-    feed-url: https://direct.faforever.com/news/feed
+    feed-url: https://direct.localhost/news/feed
 
   replay:
     remote-host: localhost
     remote-port: 15000
 
   website:
-    base-url: http://localhost:8020
+    base-url: http://localhost:3000
 
   api:
     base-url: http://localhost:8010
 
   forged-alliance:
-    exe-url: https://content.faforever.com/faf/updaterNew/updates_faf_files/ForgedAlliance.exe
+    exe-url: https://localhost:8000/faf/updaterNew/updates_faf_files/ForgedAlliance.exe
 
   oauth:
     base-url: http://localhost:4444
     scopes: openid offline public_profile upload_map upload_mod lobby
     client-id: faf-java-client
-    timeout-milliseconds: 1500000
 
 logging:
   level:

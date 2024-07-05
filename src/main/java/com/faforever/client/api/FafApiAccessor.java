@@ -44,7 +44,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -77,7 +76,6 @@ import static com.faforever.commons.api.elide.ElideNavigator.qBuilder;
 @Lazy
 @Slf4j
 @Component
-@Profile("!offline")
 @RequiredArgsConstructor
 public class FafApiAccessor implements InitializingBean {
 

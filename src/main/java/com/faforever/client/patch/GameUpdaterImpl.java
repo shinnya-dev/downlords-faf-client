@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -35,6 +36,7 @@ import static com.faforever.client.game.KnownFeaturedMod.FAF_DEVELOP;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+@Profile("!local")
 public class GameUpdaterImpl implements GameUpdater {
 
   private static final List<String> NAMES_OF_FEATURED_BASE_MODS = Stream.of(FAF, FAF_BETA, FAF_DEVELOP)
