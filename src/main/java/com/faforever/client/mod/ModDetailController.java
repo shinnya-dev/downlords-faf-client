@@ -30,7 +30,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -42,6 +41,9 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -68,7 +70,6 @@ public class ModDetailController extends NodeController<Node> {
   public Label versionLabel;
   public Label dependenciesTitle;
   public VBox dependenciesContainer;
-  public Label progressLabel;
   public ScrollPane scrollPane;
   public Button uninstallButton;
   public Button installButton;
@@ -76,7 +77,6 @@ public class ModDetailController extends NodeController<Node> {
   public Label nameLabel;
   public Label idLabel;
   public Label uploaderLabel;
-  public ProgressBar progressBar;
   public Label modDescriptionLabel;
   public Node modDetailRoot;
   public ReviewsController<ModVersionReview> reviewsController;
@@ -84,7 +84,7 @@ public class ModDetailController extends NodeController<Node> {
 
   @Override
   protected void onInitialize() {
-    JavaFxUtil.bindManagedToVisible(uninstallButton, installButton, progressBar, progressLabel, getRoot());
+    JavaFxUtil.bindManagedToVisible(uninstallButton, installButton, getRoot());
     JavaFxUtil.fixScrollSpeed(scrollPane);
 
     contextMenuBuilder.addCopyLabelContextMenu(nameLabel, authorLabel, idLabel, uploaderLabel, versionLabel);
@@ -110,13 +110,16 @@ public class ModDetailController extends NodeController<Node> {
             .flatMap(imageViewHelper::createPlaceholderImageOnErrorObservable)
             .when(showing));
     nameLabel.textProperty().bind(modObservable.map(Mod::displayName).when(showing));
-    authorLabel.textProperty().bind(modObservable.map(Mod::author)
-            .map(author -> i18n.get("modVault.details.author", author))
-            .when(showing));
+    authorLabel.textProperty()
+               .bind(modObservable.map(Mod::author)
+                                  .map(author -> Arrays.stream(author.split(","))
+                                                       .map(String::trim)
+                                                       .collect(Collectors.joining("\n")))
+                                  .when(showing));
     uploaderLabel.textProperty().bind(modObservable.map(Mod::uploader).flatMap(PlayerInfo::usernameProperty)
-            .map(author -> i18n.get("modVault.details.uploader", author))
+            .map(author -> author)
             .when(showing));
-    idLabel.textProperty().bind(modVersion.map(ModVersion::id).map(id -> i18n.get("mod.idNumber", id)).when(showing));
+    idLabel.textProperty().bind(modVersion.map(ModVersion::id).map(Object::toString).when(showing));
 
     updatedLabel.textProperty().bind(modVersion.map(ModVersion::createTime).map(timeService::asDate).when(showing));
 
@@ -131,9 +134,6 @@ public class ModDetailController extends NodeController<Node> {
     BooleanExpression installed = modService.isInstalledBinding(modVersion);
     installButton.visibleProperty().bind(installed.not().when(showing));
     uninstallButton.visibleProperty().bind(installed.when(showing));
-    progressBar.visibleProperty()
-               .bind(uninstallButton.visibleProperty().not().and(installButton.visibleProperty().not()).when(showing));
-    progressLabel.visibleProperty().bind(progressBar.visibleProperty().when(showing));
   }
 
   public void onCloseButtonClicked() {
@@ -216,8 +216,7 @@ public class ModDetailController extends NodeController<Node> {
 
   public void onInstallButtonClicked() {
     ModVersion modVersion = this.modVersion.get();
-    modService.downloadIfNecessary(modVersion, progressBar.progressProperty(),
-                                   progressLabel.textProperty()).subscribe(null, throwable -> {
+    modService.downloadIfNecessary(modVersion, null, null).subscribe(null, throwable -> {
           log.error("Could not install mod", throwable);
           notificationService.addImmediateErrorNotification(throwable, "modVault.installationFailed",
                                                             modVersion.mod().displayName(),
@@ -226,9 +225,6 @@ public class ModDetailController extends NodeController<Node> {
   }
 
   public void onUninstallButtonClicked() {
-    progressBar.progressProperty().unbind();
-    progressBar.setProgress(-1);
-
     ModVersion modVersion = this.modVersion.get();
     modService.uninstallMod(modVersion)
         .exceptionally(throwable -> {
