@@ -4,6 +4,7 @@ import com.faforever.client.api.FafApiAccessor;
 import com.faforever.client.config.CacheNames;
 import com.faforever.client.domain.api.CoopMission;
 import com.faforever.client.domain.api.CoopResult;
+import com.faforever.client.domain.api.CoopScenario;
 import com.faforever.client.mapstruct.CoopMapper;
 import com.faforever.commons.api.dto.Game;
 import com.faforever.commons.api.dto.GamePlayerStats;
@@ -32,10 +33,10 @@ public class CoopService {
   private final FafApiAccessor fafApiAccessor;
   private final CoopMapper coopMapper;
 
-  @Cacheable(value = CacheNames.COOP_MAPS, sync = true)
-  public Flux<CoopMission> getMissions() {
-    ElideNavigatorOnCollection<com.faforever.commons.api.dto.CoopMission> navigator = ElideNavigator.of(
-        com.faforever.commons.api.dto.CoopMission.class).collection().pageSize(1000);
+  @Cacheable(value = CacheNames.COOP_SCENARIOS, sync = true)
+  public Flux<CoopScenario> getScenariosWithMaps() {
+    ElideNavigatorOnCollection<com.faforever.commons.api.dto.CoopScenario> navigator = ElideNavigator.of(
+        com.faforever.commons.api.dto.CoopScenario.class).collection().pageSize(1000).addInclude("maps");
     return fafApiAccessor.getMany(navigator).map(coopMapper::map).cache();
   }
 

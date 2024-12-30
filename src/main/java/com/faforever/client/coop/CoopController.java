@@ -2,6 +2,7 @@ package com.faforever.client.coop;
 
 import com.faforever.client.domain.api.CoopMission;
 import com.faforever.client.domain.api.CoopResult;
+import com.faforever.client.domain.api.CoopScenario;
 import com.faforever.client.domain.server.GameInfo;
 import com.faforever.client.fx.ControllerTableCell;
 import com.faforever.client.fx.FxApplicationThreadExecutor;
@@ -46,6 +47,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -108,15 +110,25 @@ public class CoopController extends NodeController<Node> {
   public TableColumn<CoopResult, Duration> timeColumn;
   public TableColumn<CoopResult, String> replayColumn;
   public GamesTableController gamesTableController;
+  public ComboBox<CoopScenario> coopScenarioComboBox;
 
   @Override
   protected void onInitialize() {
+    coopScenarioComboBox.setCellFactory(param -> coopScenarioListCell());
+    coopScenarioComboBox.setButtonCell(coopScenarioListCell());
+    coopScenarioComboBox.getSelectionModel()
+                        .selectedItemProperty()
+                        .when(showing)
+                        .subscribe(this::setSelectedCoopScenario);
+
     missionComboBox.setCellFactory(param -> missionListCell());
     missionComboBox.setButtonCell(missionListCell());
     missionComboBox.getSelectionModel().selectedItemProperty().when(showing).subscribe(this::setSelectedMission);
 
     mapPreviewImageView.imageProperty()
-                       .bind(missionComboBox.getSelectionModel().selectedItemProperty().map(CoopMission::mapFolderName)
+                       .bind(missionComboBox.getSelectionModel()
+                                            .selectedItemProperty()
+                                            .map(CoopMission::mapFolderName)
                                             .map(folderName -> mapService.loadPreview(folderName, PreviewSize.LARGE))
                                             .flatMap(imageViewHelper::createPlaceholderImageOnErrorObservable)
                                             .when(showing));
@@ -132,7 +144,8 @@ public class CoopController extends NodeController<Node> {
                              if (newValue.isEmpty()) {
                                return true;
                              }
-                             return coopResultBean.replay().teams()
+                             return coopResultBean.replay()
+                                                  .teams()
                                                   .values()
                                                   .stream()
                                                   .flatMap(Collection::stream)
@@ -147,11 +160,14 @@ public class CoopController extends NodeController<Node> {
     playerCountColumn.setCellValueFactory(param -> ObservableConstant.valueOf((param.getValue().playerCount())));
     playerCountColumn.setCellFactory(param -> new StringCell<>(String::valueOf));
 
-    playerNamesColumn.setCellValueFactory(param -> ObservableConstant.valueOf(param.getValue().replay().teams().values()
-                                                                           .stream()
-                                                                           .flatMap(Collection::stream)
-                                                                           .collect(Collectors.joining(
-                                                                               i18n.get("textSeparator")))));
+    playerNamesColumn.setCellValueFactory(param -> ObservableConstant.valueOf(param.getValue()
+                                                                                   .replay()
+                                                                                   .teams()
+                                                                                   .values()
+                                                                                   .stream()
+                                                                                   .flatMap(Collection::stream)
+                                                                                   .collect(Collectors.joining(
+                                                                                       i18n.get("textSeparator")))));
 
     playerNamesColumn.setCellFactory(param -> new StringCell<>(Function.identity()));
 
@@ -185,31 +201,40 @@ public class CoopController extends NodeController<Node> {
     FilteredList<GameInfo> filteredItems = new FilteredList<>(gameService.getGames());
     filteredItems.setPredicate(OPEN_COOP_GAMES_PREDICATE);
 
-    coopService.getMissions()
+    // Disable combo boxes until the scenarios are loaded (prevents opening and seeing empty lists)
+    coopScenarioComboBox.setDisable(true);
+    missionComboBox.setDisable(true);
+
+    coopService.getScenariosWithMaps()
                .collectList()
                .map(FXCollections::observableList)
                .publishOn(fxApplicationThreadExecutor.asScheduler())
-               .subscribe(coopMaps -> {
-                 missionComboBox.setItems(coopMaps);
+               .subscribe(coopScenarios -> {
+                 coopScenarioComboBox.setItems(coopScenarios);
+                 SingleSelectionModel<CoopScenario> selectionModel = coopScenarioComboBox.getSelectionModel();
+                 if (selectionModel.isEmpty()) {
+                   selectionModel.selectFirst();
+                 }
 
-                 gamesTableController.initializeGameTable(filteredItems,
-                                                          mapFolderName -> coopMissionFromFolderName(coopMaps,
-                                                                                                     mapFolderName),
-                                                          false);
+                 List<CoopMission> allMaps = coopScenarios.stream()
+                                                  .flatMap(scenario -> scenario.maps().stream())
+                                                  .toList();
+
+                 gamesTableController.initializeGameTable(filteredItems, mapFolderName -> coopMissionFromFolderName(
+                     allMaps, mapFolderName), false);
                  gamesTableController.getMapPreviewColumn().setVisible(false);
                  gamesTableController.getRatingRangeColumn().setVisible(false);
 
 
-                 SingleSelectionModel<CoopMission> selectionModel = missionComboBox.getSelectionModel();
-                 if (selectionModel.isEmpty()) {
-                   selectionModel.selectFirst();
-                 }
+                 coopScenarioComboBox.setDisable(false);
+                 missionComboBox.setDisable(false);
                }, throwable -> notificationService.addPersistentErrorNotification("coop.couldNotLoad",
                                                                                   throwable.getLocalizedMessage()));
   }
 
   private String coopMissionFromFolderName(List<CoopMission> coopMaps, String mapFolderName) {
-    return coopMaps.stream().filter(coopMission -> coopMission.mapFolderName().equalsIgnoreCase(mapFolderName))
+    return coopMaps.stream()
+                   .filter(coopMission -> coopMission.mapFolderName().equalsIgnoreCase(mapFolderName))
                    .findFirst()
                    .map(CoopMission::name)
                    .orElse(i18n.get("coop.unknownMission"));
@@ -233,19 +258,36 @@ public class CoopController extends NodeController<Node> {
   }
 
   private ListCell<CoopMission> missionListCell() {
-    return new StringListCell<>(fxApplicationThreadExecutor, CoopMission::name, mission -> {
+    // Todo: figure out this
+    return new StringListCell<>(fxApplicationThreadExecutor, CoopMission::name, mission -> new Label(), Pos.CENTER_LEFT,
+                                "coop-mission");
+  }
+
+  private ListCell<CoopScenario> coopScenarioListCell() {
+    return new StringListCell<>(fxApplicationThreadExecutor, CoopScenario::name, scenario -> {
       Label label = new Label();
       Region iconRegion = new Region();
-      label.setGraphic(iconRegion);
+
       iconRegion.getStyleClass().add(ThemeService.CSS_CLASS_ICON);
-      switch (mission.category()) {
+      switch (scenario.faction()) {
         case AEON -> iconRegion.getStyleClass().add(ThemeService.AEON_STYLE_CLASS);
         case CYBRAN -> iconRegion.getStyleClass().add(ThemeService.CYBRAN_STYLE_CLASS);
         case UEF -> iconRegion.getStyleClass().add(ThemeService.UEF_STYLE_CLASS);
+        case SERAPHIM -> iconRegion.getStyleClass().add(ThemeService.SERAPHIM_STYLE_CLASS);
         default -> {
-          return null;
+          if (scenario.name().equals("Forged Alliance campaign")) {
+            iconRegion.getStyleClass().add("icon-faf");
+          } else {
+            iconRegion.getStyleClass().add("empty-icon");
+          }
         }
       }
+
+      StackPane iconWrapper = new StackPane(iconRegion);
+      iconWrapper.setPrefSize(30, 30);
+      iconWrapper.setAlignment(Pos.CENTER);
+      label.setGraphic(iconWrapper);
+
       return label;
     }, Pos.CENTER_LEFT, "coop-mission");
   }
@@ -266,14 +308,14 @@ public class CoopController extends NodeController<Node> {
                });
   }
 
-  private Set<String> getAllPlayerNamesFromTeams(CoopResult coopResult) {
-    return coopResult.replay().teams()
-                     .values()
-                     .stream()
-                     .flatMap(List::stream)
-                     .collect(Collectors.toUnmodifiableSet());
-  }
+  private void setSelectedCoopScenario(CoopScenario coopScenario) {
+    if (coopScenario == null) {
+      return;
+    }
 
+    missionComboBox.setItems(FXCollections.observableList(coopScenario.maps()));
+    missionComboBox.getSelectionModel().selectFirst();
+  }
 
   private CoopMission getSelectedMission() {
     return missionComboBox.getSelectionModel().getSelectedItem();

@@ -3,6 +3,7 @@ package com.faforever.client.coop;
 import com.faforever.client.api.FafApiAccessor;
 import com.faforever.client.domain.api.CoopMission;
 import com.faforever.client.domain.api.CoopResult;
+import com.faforever.client.domain.api.CoopScenario;
 import com.faforever.client.mapstruct.CoopMapper;
 import com.faforever.client.mapstruct.MapperSetup;
 import com.faforever.client.test.ElideMatchers;
@@ -45,12 +46,12 @@ public class CoopServiceTest extends ServiceTest {
   }
 
   @Test
-  public void testGetCoopMaps() throws Exception {
-    CoopMission coopMission = Instancio.create(CoopMission.class);
+  public void testGetScenariosWithMaps() throws Exception {
+    CoopScenario coopScenario = Instancio.create(CoopScenario.class);
 
-    Flux<ElideEntity> resultFlux = Flux.just(coopMapper.map(coopMission));
+    Flux<ElideEntity> resultFlux = Flux.just(coopMapper.map(coopScenario));
     when(fafApiAccessor.getMany(any())).thenReturn(resultFlux);
-    StepVerifier.create(instance.getMissions()).expectNext(coopMission).verifyComplete();
+    StepVerifier.create(instance.getScenariosWithMaps()).expectNext(coopScenario).verifyComplete();
     verify(fafApiAccessor).getMany(argThat(ElideMatchers.hasPageSize(1000)));
   }
 
